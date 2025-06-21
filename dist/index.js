@@ -58,6 +58,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
+const middleware_1 = require("./middleware");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const db_1 = require("./db");
 const dotenv = __importStar(require("dotenv"));
@@ -137,8 +138,32 @@ app.post("/api/v1/signIn", (req, res) => __awaiter(void 0, void 0, void 0, funct
         });
     }
 }));
-app.post("api/v1/content", (req, res) => {
-});
+app.post("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { link, title } = req.body;
+        // Ensure userId is attached by middleware
+        const userId = req.userId;
+        if (!userId) {
+            res.status(401).json({ message: "Unauthorized: userId missing" });
+            return;
+        }
+        yield db_1.contentModedl.create({
+            link,
+            title,
+            userid: userId,
+            tags: [],
+        });
+        res.status(200).json({
+            message: "Content added successfully",
+        });
+    }
+    catch (error) {
+        console.error("Error adding content:", error);
+        res.status(500).json({
+            error: "Internal server error while adding content",
+        });
+    }
+}));
 app.get("api/v1/content", (req, res) => {
 });
 app.delete("api/v1/signUp", (req, res) => {

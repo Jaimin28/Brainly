@@ -1,8 +1,10 @@
-import mongoose from "mongoose"; 
+import mongoose, { mongo } from "mongoose"; 
 import { model,Schema } from "mongoose";
 import { parseJsonSourceFileConfigFileContent } from "typescript";
 import *as dotenv from 'dotenv';
+import { string } from "zod";
 dotenv.config();
+
 
 // database connection
 export const dbconnect=()=>{
@@ -30,3 +32,19 @@ const userSchema = new Schema({
 })
 
 export const userModel =  model("User",userSchema);
+
+// content Schema
+
+const contentSchema = new Schema({
+  title: { type: String, required: true },
+  link: { type: String, required: true },
+  tag: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Tag' }],
+  userid: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+});
+export const  contentModedl = model("Content",contentSchema);
+
+// tag schema
+
+const tagSchema = new Schema({
+
+})
