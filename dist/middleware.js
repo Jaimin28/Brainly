@@ -42,18 +42,15 @@ const dotenv = __importStar(require("dotenv"));
 dotenv.config();
 const userMiddleware = (req, res, next) => {
     const authHeader = req.header("Authorization");
-    // Check for presence of token
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
         res.status(401).json({ message: "Token missing or malformed" });
         return;
     }
     const token = authHeader.replace("Bearer ", "");
     try {
-        // Verify token
         const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
-        // Attach user ID to request (assumes token payload has `id`)
         req.userId = decoded.id;
-        next(); // ✅ Allow route to continue
+        next();
     }
     catch (error) {
         res.status(403).json({ message: "Invalid or expired token" });

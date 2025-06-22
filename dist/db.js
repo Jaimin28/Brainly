@@ -43,30 +43,33 @@ const dotenv = __importStar(require("dotenv"));
 dotenv.config();
 // database connection
 const dbconnect = () => {
-    mongoose_1.default.connect(process.env.DATABASE_URL).then(() => {
+    mongoose_1.default
+        .connect(process.env.DATABASE_URL)
+        .then(() => {
         console.log("Database Connection Success");
-    }).catch((error) => {
+    })
+        .catch((error) => {
         console.log("Db connection error");
         console.log(error);
         process.exit(1);
     });
 };
 exports.dbconnect = dbconnect;
-// user schema 
+// user schema
 const userSchema = new mongoose_2.Schema({
     username: { type: String, unique: true, required: true },
     password: { type: String, required: true, unique: true },
     token: {
-        type: String // ✅ Add this field
-    }
+        type: String, // ✅ Add this field
+    },
 });
 exports.userModel = (0, mongoose_2.model)("User", userSchema);
 // content Schema
 const contentSchema = new mongoose_2.Schema({
     title: { type: String, required: true },
     link: { type: String, required: true },
-    tag: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: 'Tag' }],
-    userid: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'User', required: true }
+    tag: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: "Tag" }],
+    userid: { type: mongoose_1.default.Schema.Types.ObjectId, ref: "User", required: true },
 });
 exports.contentModedl = (0, mongoose_2.model)("Content", contentSchema);
 // tag schema

@@ -70,9 +70,15 @@ app.use(express_1.default.json());
 const db_2 = require("./db");
 (0, db_2.dbconnect)();
 const signUpSchema = zod_1.z.object({
-    username: zod_1.z.string().min(3, "Username must be at least 3 characters").max(10, "Username must be at most 10 characters"),
-    password: zod_1.z.string().min(8, "Password must be at least 8 characters").max(20, "Password must be at most 20 characters")
-        .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/, "Password must include uppercase, lowercase, number, and special character")
+    username: zod_1.z
+        .string()
+        .min(3, "Username must be at least 3 characters")
+        .max(10, "Username must be at most 10 characters"),
+    password: zod_1.z
+        .string()
+        .min(8, "Password must be at least 8 characters")
+        .max(20, "Password must be at most 20 characters")
+        .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/, "Password must include uppercase, lowercase, number, and special character"),
 });
 app.post("/api/v1/signUp", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -80,22 +86,22 @@ app.post("/api/v1/signUp", (req, res) => __awaiter(void 0, void 0, void 0, funct
         const exitingUser = yield db_1.userModel.findOne({ username });
         if (exitingUser) {
             res.status(400).json({
-                error: "user alredy present"
+                error: "user alredy present",
             });
         }
         const hashedpassword = yield bcrypt.hash(password, 10);
         const newUser = yield db_1.userModel.create({
             username,
-            password: hashedpassword
+            password: hashedpassword,
         });
         res.status(200).json({
             message: "User Created succesfully",
-            userId: newUser._id
+            userId: newUser._id,
         });
     }
     catch (error) {
         res.status(400).json({
-            error: "something went wrong while create user"
+            error: "something went wrong while create user",
         });
     }
 }));
@@ -164,12 +170,46 @@ app.post("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter
         });
     }
 }));
-app.get("api/v1/content", (req, res) => {
-});
-app.delete("api/v1/signUp", (req, res) => {
-});
-app.post("api/v1/brain/share", (req, res) => {
-});
-app.get("api/v1/brain/:shareLink", (req, res) => {
-});
+app.get("/api/v1/getcontent", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const userId = req.userId; // or use a custom interface for req with userId
+        const content = yield db_1.contentModedl
+            .find({ userid: userId })
+            .populate("userid", "username");
+        res.json({ content });
+    }
+    catch (error) {
+        res.status(500).json({ message: "Server error", error });
+    }
+}));
+app.delete("/api/v1/deletecontent", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { contentId } = req.body;
+        if (!contentId) {
+            res.status(400).json({ message: "contentId is required" });
+            return;
+        }
+        const userId = req.userId;
+        const result = yield db_1.contentModedl.deleteOne({
+            _id: contentId,
+            userid: userId,
+        });
+        if (result.deletedCount === 0) {
+            res.status(404).json({ message: "No content found or not authorized" });
+            return;
+        }
+        res.status(200).json({
+            message: "Content deleted successfully",
+        });
+    }
+    catch (error) {
+        console.error("Delete content error:", error); // log to console (backend)
+        res.status(400).json({
+            message: "Error occurred during delete content",
+            error: error instanceof Error ? error.message : String(error), // fix here
+        });
+    }
+}));
+app.post("api/v1/brain/share", (req, res) => { });
+app.get("api/v1/brain/:shareLink", (req, res) => { });
 app.listen(process.env.PORT);
