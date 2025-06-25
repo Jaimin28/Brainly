@@ -6,7 +6,7 @@ import { userMiddleware } from "./middleware";
 import { Request, Response } from "express";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
-import { contentModedl, userModel } from "./db";
+import { contentModedl, linkModel, userModel } from "./db";
 import * as dotenv from "dotenv";
 dotenv.config();
 import * as bcrypt from "bcrypt";
@@ -14,6 +14,7 @@ import { z } from "zod";
 const app = express();
 app.use(express.json());
 import { dbconnect } from "./db";
+import { random } from "./utlis";
 dbconnect();
 
 const signUpSchema = z.object({
@@ -187,8 +188,78 @@ app.delete(
   }
 );
 
-app.post("api/v1/brain/share", (req, res) => {});
+app.post("/api/v1/brain/share",userMiddleware, async(req:Request, res:Response):Promise<void> => {
+  try {
+    const {share} = req.body;
+    const hash = random(10);
+     const existinglink = await linkModel.findOne({
+      userid:(req as any).userid
+    })
+    if(existinglink){
+      res.json({
+        hash:existinglink.hash
+      })
+      return ;
+    }
+  if(share){
+    await linkModel.create({
+        userid:(req as any).userId,
+        hash:hash
+    })
+    res.json({
+      message:"/share/" +hash
+    })
+  }else{
+    await linkModel.deleteOne({
+      userid:(req as any).userId
+    });
 
-app.get("api/v1/brain/:shareLink", (req, res) => {});
+    res.json({
+      message:"Removed Link"
+    })
+  }
+  
+  } catch (error) {
+    res.status(400).json({
+      message:"Error occured while generating Shareble link",
+      error
+    })
+    
+  }
+});
+
+app.get("/api/v1/brain/:shareLink", async(req:Request, res:Response) : Promise<void> => {  
+  try {
+    const hash = req.params.shareLink;
+    const link = await linkModel.findOne({hash});
+    console.log(link);
+    
+
+    if(!link){
+      res.status(411).json({
+        message:"sorry,link is not available"
+      })
+    }
+
+    const content = await contentModedl.find({userid:link?.userid});
+    const user = await userModel.findOne({_id:link?.userid});
+
+    if(!user){
+      res.status(411).json({
+        message:"user not found"
+      })
+    }
+
+    res.status(200).json({
+      username:user?.username,
+      content:content
+    })
+
+  } catch (error) {
+    console.log("error in while fetching content from link",error);
+    res.status(500).json({message:"internal server error"});
+  }
+
+});
 
 app.listen(process.env.PORT);

@@ -68,6 +68,7 @@ const zod_1 = require("zod");
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 const db_2 = require("./db");
+const utlis_1 = require("./utlis");
 (0, db_2.dbconnect)();
 const signUpSchema = zod_1.z.object({
     username: zod_1.z
@@ -210,6 +211,69 @@ app.delete("/api/v1/deletecontent", middleware_1.userMiddleware, (req, res) => _
         });
     }
 }));
-app.post("api/v1/brain/share", (req, res) => { });
-app.get("api/v1/brain/:shareLink", (req, res) => { });
+app.post("/api/v1/brain/share", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { share } = req.body;
+        const hash = (0, utlis_1.random)(10);
+        const existinglink = yield db_1.linkModel.findOne({
+            userid: req.userid
+        });
+        if (existinglink) {
+            res.json({
+                hash: existinglink.hash
+            });
+            return;
+        }
+        if (share) {
+            yield db_1.linkModel.create({
+                userid: req.userId,
+                hash: hash
+            });
+            res.json({
+                message: "/share/" + hash
+            });
+        }
+        else {
+            yield db_1.linkModel.deleteOne({
+                userid: req.userId
+            });
+            res.json({
+                message: "Removed Link"
+            });
+        }
+    }
+    catch (error) {
+        res.status(400).json({
+            message: "Error occured while generating Shareble link",
+            error
+        });
+    }
+}));
+app.get("/api/v1/brain/:shareLink", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const hash = req.params.shareLink;
+        const link = yield db_1.linkModel.findOne({ hash });
+        console.log(link);
+        if (!link) {
+            res.status(411).json({
+                message: "sorry,link is not available"
+            });
+        }
+        const content = yield db_1.contentModedl.find({ userid: link === null || link === void 0 ? void 0 : link.userid });
+        const user = yield db_1.userModel.findOne({ _id: link === null || link === void 0 ? void 0 : link.userid });
+        if (!user) {
+            res.status(411).json({
+                message: "user not found"
+            });
+        }
+        res.status(200).json({
+            username: user === null || user === void 0 ? void 0 : user.username,
+            content: content
+        });
+    }
+    catch (error) {
+        console.log("error in while fetching content from link", error);
+        res.status(500).json({ message: "internal server error" });
+    }
+}));
 app.listen(process.env.PORT);
