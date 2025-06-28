@@ -70,6 +70,8 @@ app.use(express_1.default.json());
 const db_2 = require("./db");
 const utlis_1 = require("./utlis");
 (0, db_2.dbconnect)();
+const cors_1 = __importDefault(require("cors"));
+app.use((0, cors_1.default)());
 const signUpSchema = zod_1.z.object({
     username: zod_1.z
         .string()
@@ -89,6 +91,7 @@ app.post("/api/v1/signUp", (req, res) => __awaiter(void 0, void 0, void 0, funct
             res.status(400).json({
                 error: "user alredy present",
             });
+            return;
         }
         const hashedpassword = yield bcrypt.hash(password, 10);
         const newUser = yield db_1.userModel.create({
@@ -114,12 +117,14 @@ app.post("/api/v1/signIn", (req, res) => __awaiter(void 0, void 0, void 0, funct
             res.status(400).json({
                 error: "Please sign up first",
             });
+            return;
         }
         const isMatch = yield bcrypt.compare(password, exitingUser.password);
         if (!isMatch) {
             res.status(401).json({
                 error: "Invalid credentials",
             });
+            return;
         }
         else {
             const payload = {

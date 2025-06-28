@@ -16,7 +16,8 @@ app.use(express.json());
 import { dbconnect } from "./db";
 import { random } from "./utlis";
 dbconnect();
-
+import cors from "cors"
+app.use(cors());
 const signUpSchema = z.object({
   username: z
     .string()
@@ -36,18 +37,24 @@ app.post(
   "/api/v1/signUp",
   async (req: Request, res: Response): Promise<void> => {
     try {
+      
       const { username, password } = signUpSchema.parse(req.body);
+      
       const exitingUser = await userModel.findOne({ username });
+      
       if (exitingUser) {
         res.status(400).json({
           error: "user alredy present",
         });
+        return;
       }
       const hashedpassword = await bcrypt.hash(password, 10);
+       
       const newUser = await userModel.create({
         username,
         password: hashedpassword,
       });
+      
       res.status(200).json({
         message: "User Created succesfully",
         userId: newUser._id,
@@ -71,6 +78,7 @@ app.post(
         res.status(400).json({
           error: "Please sign up first",
         });
+        return;
       }
 
       const isMatch = await bcrypt.compare(password, exitingUser!.password);
@@ -78,6 +86,7 @@ app.post(
         res.status(401).json({
           error: "Invalid credentials",
         });
+        return;
       } else {
         const payload = {
           username: exitingUser!.username,
