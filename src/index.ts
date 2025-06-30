@@ -120,7 +120,7 @@ app.post(
   userMiddleware,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const { link, title } = req.body;
+      const { link, title,type } = req.body;
 
       // Ensure userId is attached by middleware
       const userId = (req as any).userId;
@@ -132,6 +132,7 @@ app.post(
       await contentModedl.create({
         link,
         title,
+        type,
         userid: userId,
         tags: [],
       });

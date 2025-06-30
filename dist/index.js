@@ -152,7 +152,7 @@ app.post("/api/v1/signIn", (req, res) => __awaiter(void 0, void 0, void 0, funct
 }));
 app.post("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { link, title } = req.body;
+        const { link, title, type } = req.body;
         // Ensure userId is attached by middleware
         const userId = req.userId;
         if (!userId) {
@@ -162,6 +162,7 @@ app.post("/api/v1/content", middleware_1.userMiddleware, (req, res) => __awaiter
         yield db_1.contentModedl.create({
             link,
             title,
+            type,
             userid: userId,
             tags: [],
         });

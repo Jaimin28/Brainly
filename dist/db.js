@@ -68,6 +68,7 @@ exports.userModel = (0, mongoose_2.model)("User", userSchema);
 const contentSchema = new mongoose_2.Schema({
     title: { type: String, required: true },
     link: { type: String, required: true },
+    type: { type: String, required: true },
     tag: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: "Tag" }],
     userid: { type: mongoose_1.default.Schema.Types.ObjectId, ref: "User", required: true },
 });
